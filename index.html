@@ -16,9 +16,13 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
 .radar{position:relative;width:min(78vw,320px);aspect-ratio:1;margin:0 auto 22px}
 .c{position:absolute;border-radius:50%;background:#0d1114;border:2px solid var(--linea);transition:background .35s,border-color .35s}
 .c1{inset:0}.c2{inset:12.5%}.c3{inset:25%}.c4{inset:37.5%}
-.volto{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9%}
-.occhio{width:11%;aspect-ratio:3/4;border-radius:50%;background:var(--ciano);opacity:.35;transition:opacity .35s}
-.vivo .occhio{opacity:1}
+.cuore{position:absolute;left:50%;top:50%;width:17%;height:17%;margin:-8.5% 0 0 -8.5%;transition:transform .2s}
+.cuore svg{width:100%;height:100%;display:block}
+.cuore path{fill:#3a2a30;transition:fill .35s}
+.cuore.batte{animation:batti 1s ease-in-out infinite}
+.cuore.batte2{animation-duration:.6s}
+@keyframes batti{0%,100%{transform:scale(1)}50%{transform:scale(1.22)}}
+@media (prefers-reduced-motion:reduce){.cuore.batte{animation:none}}
 .stato{font-size:30px;font-weight:700;margin:0;min-height:36px;text-align:center}
 .dettaglio{font-size:14px;color:var(--grigio);margin:6px 0 22px;min-height:18px;text-align:center}
 .btn{appearance:none;border:0;border-radius:999px;padding:16px 28px;font:700 17px Helvetica,Arial,sans-serif;background:var(--ciano);color:#000;width:100%;max-width:320px}
@@ -41,7 +45,7 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
 
   <div class="radar" id="radar">
     <div class="c c1"></div><div class="c c2"></div><div class="c c3"></div><div class="c c4"></div>
-    <div class="volto" id="volto"><div class="occhio"></div><div class="occhio"></div></div>
+    <div class="cuore" id="cuore"><svg viewBox="0 0 24 24" aria-hidden="true"><path id="cuorePath" d="M12 21.2C12 21.2 2.6 15.4 2.6 8.9 2.6 5.9 4.9 3.8 7.6 3.8c1.8 0 3.4 1 4.4 2.6 1-1.6 2.6-2.6 4.4-2.6 2.7 0 5 2.1 5 5.1 0 6.5-9.4 12.3-9.4 12.3z"/></svg></div>
   </div>
 
   <p class="stato" id="stato">Pronto</p>
@@ -71,6 +75,7 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
   var CIANO = ['', '#08323a', '#0b5663', '#0f8a9c', '#00e5ff'];
   var ROSA  = ['', '#3b1a24', '#6e2a3d', '#b0405c', '#ff5a7a'];
   var VUOTO = '#0d1114';
+  var CUORE = ['#3a2a30', '#7a2a40', '#b0405c', '#ff5a7a', '#ffffff'];   // il cuore si accende con la vicinanza (a 4 e bianco, perche il cerchio dietro e rosa)
   var NOMI = ['Non lo sento', 'Freddo', 'Tiepido', 'Caldo', 'Caldissimo!'];
 
   var dispositivo = null, annulla = null, medio = null, ultimo = 0, orologio = null, sveglia = null, livelloPrec = 0;
@@ -84,7 +89,8 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
       if (k <= l) { var col = (l >= 3 ? ROSA : CIANO)[k]; c.style.background = col; c.style.borderColor = l >= 3 ? '#ff5a7a' : '#00e5ff'; }
       else { c.style.background = VUOTO; c.style.borderColor = '#26303a'; }
     }
-    $('volto').className = 'volto' + (l > 0 ? ' vivo' : '');
+    $('cuorePath').style.fill = CUORE[l];
+    $('cuore').className = 'cuore' + (l >= 3 ? ' batte' : '') + (l === 4 ? ' batte2' : '');
     $('stato').textContent = NOMI[l];
     $('stato').style.color = l >= 3 ? '#ff5a7a' : (l > 0 ? '#00e5ff' : '#fff');
   }
