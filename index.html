@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Trova UBI</title>
+<style>
+:root{--ciano:#00e5ff;--rosa:#ff5a7a;--grigio:#9aa5b1;--linea:#26303a;--fondo:#000}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--fondo);color:#fff;font-family:Helvetica,Arial,sans-serif;-webkit-text-size-adjust:100%}
+body{min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:max(24px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom))}
+main{width:100%;max-width:420px;display:flex;flex-direction:column;align-items:center}
+.k{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--grigio);margin:8px 0 0}
+h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
+.radar{position:relative;width:min(78vw,320px);aspect-ratio:1;margin:0 auto 22px}
+.c{position:absolute;border-radius:50%;background:#0d1114;border:2px solid var(--linea);transition:background .35s,border-color .35s}
+.c1{inset:0}.c2{inset:12.5%}.c3{inset:25%}.c4{inset:37.5%}
+.volto{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:9%}
+.occhio{width:11%;aspect-ratio:3/4;border-radius:50%;background:var(--ciano);opacity:.35;transition:opacity .35s}
+.vivo .occhio{opacity:1}
+.stato{font-size:30px;font-weight:700;margin:0;min-height:36px;text-align:center}
+.dettaglio{font-size:14px;color:var(--grigio);margin:6px 0 22px;min-height:18px;text-align:center}
+.btn{appearance:none;border:0;border-radius:999px;padding:16px 28px;font:700 17px Helvetica,Arial,sans-serif;background:var(--ciano);color:#000;width:100%;max-width:320px}
+.btn.sec{background:transparent;color:#fff;border:2px solid var(--linea);margin-top:12px}
+.btn:disabled{opacity:.4}
+.link{background:none;border:0;color:var(--grigio);font:14px Helvetica,Arial,sans-serif;text-decoration:underline;margin-top:14px;padding:8px}
+.err{display:none;margin:18px 0 0;padding:14px 16px;border-radius:16px;background:#2a1118;color:#ffc3cf;font-size:14px;line-height:1.4;width:100%}
+.err.on{display:block}
+.guida{margin-top:28px;padding-top:18px;border-top:2px solid var(--linea);font-size:14px;line-height:1.5;color:#c9d1d9;width:100%}
+.guida b{color:#fff}
+.guida ol{padding-left:20px;margin:8px 0 0}
+.guida li{margin:6px 0}
+.nota{font-size:12px;color:var(--grigio);margin-top:18px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+  <p class="k">Ritrova</p>
+  <h1>Trova UBI</h1>
+
+  <div class="radar" id="radar">
+    <div class="c c1"></div><div class="c c2"></div><div class="c c3"></div><div class="c c4"></div>
+    <div class="volto" id="volto"><div class="occhio"></div><div class="occhio"></div></div>
+  </div>
+
+  <p class="stato" id="stato">Pronto</p>
+  <p class="dettaglio" id="dettaglio">Premi il pulsante e scegli UBI dall'elenco.</p>
+
+  <button class="btn" id="cerca">Cerca UBI</button>
+  <button class="btn sec" id="ferma" disabled>Smetti</button>
+  <button class="link" id="tutti">Non lo trovi? Mostra tutti i dispositivi</button>
+
+  <div class="err" id="err" role="alert"></div>
+
+  <div class="guida">
+    <b>Come si usa</b>
+    <ol>
+      <li>UBI deve essere <b>acceso</b>, in <b>modalità bambino</b>, con <b>Ritrovalo</b> attivo nell'app del genitore.</li>
+      <li>Premi <b>Cerca UBI</b> e scegli <b>UBI</b> dall'elenco.</li>
+      <li>Cammina: più il cerchio si riempie e si fa <b>rosa</b>, più sei vicina. Più resta <b>azzurro</b> e vuoto, più sei lontana.</li>
+    </ol>
+    <p style="margin:12px 0 0"><b>Android o computer:</b> apri la pagina con Chrome. <b>iPhone:</b> apri la pagina con l'app gratuita <b>Bluefy</b>, perché Safari non permette di usare il Bluetooth.</p>
+  </div>
+  <p class="nota">Questa pagina non salva niente e non invia dati a nessuno.</p>
+</main>
+
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var CIANO = ['', '#08323a', '#0b5663', '#0f8a9c', '#00e5ff'];
+  var ROSA  = ['', '#3b1a24', '#6e2a3d', '#b0405c', '#ff5a7a'];
+  var VUOTO = '#0d1114';
+  var NOMI = ['Non lo sento', 'Freddo', 'Tiepido', 'Caldo', 'Caldissimo!'];
+
+  var dispositivo = null, annulla = null, medio = null, ultimo = 0, orologio = null, sveglia = null, livelloPrec = 0;
+
+  function livelloDa(r) { if (r >= -55) return 4; if (r >= -67) return 3; if (r >= -80) return 2; return 1; }
+
+  function disegna(l) {
+    var cerchi = document.querySelectorAll('.c');
+    for (var k = 1; k <= 4; k++) {
+      var c = cerchi[k - 1];
+      if (k <= l) { var col = (l >= 3 ? ROSA : CIANO)[k]; c.style.background = col; c.style.borderColor = l >= 3 ? '#ff5a7a' : '#00e5ff'; }
+      else { c.style.background = VUOTO; c.style.borderColor = '#26303a'; }
+    }
+    $('volto').className = 'volto' + (l > 0 ? ' vivo' : '');
+    $('stato').textContent = NOMI[l];
+    $('stato').style.color = l >= 3 ? '#ff5a7a' : (l > 0 ? '#00e5ff' : '#fff');
+  }
+
+  function errore(testo) { var e = $('err'); e.textContent = testo; e.className = testo ? 'err on' : 'err'; }
+
+  function riceve(ev) {
+    var r = ev.rssi;
+    if (typeof r !== 'number') return;
+    medio = medio === null ? r : medio * 0.65 + r * 0.35;   // media mobile: il numero non salta
+    ultimo = Date.now();
+    var l = livelloDa(medio);
+    disegna(l);
+    if (l > livelloPrec && l >= 3 && navigator.vibrate) navigator.vibrate(80);
+    livelloPrec = l;
+    $('dettaglio').textContent = 'Segnale: ' + Math.round(medio) + ' dBm';
+  }
+
+  function tick() {
+    if (!ultimo) return;
+    var s = (Date.now() - ultimo) / 1000;
+    if (s > 6) { disegna(0); livelloPrec = 0; medio = null; $('dettaglio').textContent = 'Nessun segnale da ' + Math.round(s) + ' secondi. Avvicinati o muoviti.'; }
+  }
+
+  async function tieniAcceso() {
+    try { if ('wakeLock' in navigator) sveglia = await navigator.wakeLock.request('screen'); } catch (e) { sveglia = null; }
+  }
+
+  async function avvia(tutti) {
+    errore('');
+    if (!('bluetooth' in navigator)) {
+      errore('Questo browser non può usare il Bluetooth. Su Android o computer apri la pagina con Chrome. Su iPhone usa l\'app gratuita Bluefy (Safari non funziona).');
+      return;
+    }
+    try {
+      var opzioni = tutti ? { acceptAllDevices: true } : { filters: [{ namePrefix: 'UBI' }] };
+      dispositivo = await navigator.bluetooth.requestDevice(opzioni);
+    } catch (e) {
+      if (e && e.name === 'NotFoundError') { $('dettaglio').textContent = 'Nessuna scelta fatta. Riprova.'; return; }
+      errore('Non riesco ad avviare la ricerca: ' + (e && e.message ? e.message : e));
+      return;
+    }
+    if (typeof dispositivo.watchAdvertisements !== 'function') {
+      errore('Questo browser non permette di leggere la forza del segnale. Su Android usa Chrome aggiornato. Su iPhone usa Bluefy.');
+      return;
+    }
+    try {
+      annulla = new AbortController();
+      dispositivo.addEventListener('advertisementreceived', riceve);
+      await dispositivo.watchAdvertisements({ signal: annulla.signal });
+    } catch (e) {
+      errore('Il browser non permette di leggere il segnale: ' + (e && e.message ? e.message : e) + '. In Chrome prova ad aprire chrome://flags e attivare "Experimental Web Platform features".');
+      return;
+    }
+    medio = null; ultimo = Date.now(); livelloPrec = 0;
+    $('cerca').disabled = true; $('ferma').disabled = false;
+    $('dettaglio').textContent = 'Sto ascoltando UBI...';
+    disegna(0);
+    if (orologio) clearInterval(orologio);
+    orologio = setInterval(tick, 500);
+    tieniAcceso();
+  }
+
+  function ferma() {
+    try { if (annulla) annulla.abort(); } catch (e) {}
+    if (dispositivo) dispositivo.removeEventListener('advertisementreceived', riceve);
+    if (orologio) { clearInterval(orologio); orologio = null; }
+    try { if (sveglia) sveglia.release(); } catch (e) {}
+    ultimo = 0; medio = null;
+    $('cerca').disabled = false; $('ferma').disabled = true;
+    $('stato').textContent = 'Pronto'; $('stato').style.color = '#fff';
+    $('dettaglio').textContent = 'Premi il pulsante e scegli UBI dall\'elenco.';
+    disegna(0); $('stato').textContent = 'Pronto';
+  }
+
+  $('cerca').addEventListener('click', function () { avvia(false); });
+  $('tutti').addEventListener('click', function () { avvia(true); });
+  $('ferma').addEventListener('click', ferma);
+  document.addEventListener('visibilitychange', function () { if (!document.hidden && orologio) tieniAcceso(); });
+  disegna(0); $('stato').textContent = 'Pronto';
+})();
+</script>
+</body>
+</html>
