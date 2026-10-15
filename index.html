@@ -51,11 +51,11 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
   <p class="stato" id="stato">Pronto</p>
   <p class="dettaglio" id="dettaglio">Premi il pulsante e scegli UBI dall'elenco.</p>
 
+  <div class="err" id="err" role="alert"></div>
+
   <button class="btn" id="cerca">Cerca UBI</button>
   <button class="btn sec" id="ferma" disabled>Smetti</button>
   <button class="link" id="tutti">Non lo trovi? Mostra tutti i dispositivi</button>
-
-  <div class="err" id="err" role="alert"></div>
 
   <div class="guida">
     <b>Come si usa</b>
@@ -67,6 +67,7 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
     <p style="margin:12px 0 0"><b>Android o computer:</b> apri la pagina con Chrome. <b>iPhone:</b> apri la pagina con l'app gratuita <b>Bluefy</b>, perché Safari non permette di usare il Bluetooth.</p>
   </div>
   <p class="nota">Questa pagina non salva niente e non invia dati a nessuno.</p>
+  <p class="nota" id="diag"></p>
 </main>
 
 <script>
@@ -95,7 +96,16 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
     $('stato').style.color = l >= 3 ? '#ff5a7a' : (l > 0 ? '#00e5ff' : '#fff');
   }
 
-  function errore(testo) { var e = $('err'); e.textContent = testo; e.className = testo ? 'err on' : 'err'; }
+  function errore(testo) {
+    var e = $('err'); e.textContent = testo; e.className = testo ? 'err on' : 'err';
+    if (testo) { $('dettaglio').textContent = 'Attenzione: leggi il messaggio qui sotto.'; try { e.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (x) {} }
+  }
+
+  function nomeBrowser() {
+    var u = navigator.userAgent || '', sis = /Android/.test(u) ? 'Android' : (/iPhone|iPad|iPod/.test(u) ? 'iPhone' : (/Windows/.test(u) ? 'Windows' : (/Mac/.test(u) ? 'Mac' : 'altro')));
+    var b = /Bluefy/i.test(u) ? 'Bluefy' : (/Edg\//.test(u) ? 'Edge' : (/CriOS/.test(u) ? 'Chrome su iPhone' : (/FxiOS|Firefox/.test(u) ? 'Firefox' : (/SamsungBrowser/.test(u) ? 'Samsung Internet' : (/Chrome\//.test(u) ? 'Chrome' : (/Safari\//.test(u) ? 'Safari' : 'sconosciuto'))))));
+    return b + ' su ' + sis;
+  }
 
   function riceve(ev) {
     var r = ev.rssi;
@@ -121,6 +131,7 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
 
   async function avvia(tutti) {
     errore('');
+    $('dettaglio').textContent = 'Apro l\'elenco dei dispositivi...';
     if (!('bluetooth' in navigator)) {
       errore('Questo browser non può usare il Bluetooth. Su Android o computer apri la pagina con Chrome. Su iPhone usa l\'app gratuita Bluefy (Safari non funziona).');
       return;
@@ -171,6 +182,9 @@ h1{font-size:34px;line-height:1.1;margin:4px 0 22px;font-weight:700}
   $('ferma').addEventListener('click', ferma);
   document.addEventListener('visibilitychange', function () { if (!document.hidden && orologio) tieniAcceso(); });
   disegna(0); $('stato').textContent = 'Pronto';
+  var haBt = ('bluetooth' in navigator);
+  $('diag').textContent = 'Browser: ' + nomeBrowser() + ' · Bluetooth del browser: ' + (haBt ? 'disponibile' : 'NON disponibile');
+  if (!haBt) errore('Questo browser non può usare il Bluetooth. Su Android o computer apri la pagina con Chrome. Su iPhone usa l\'app gratuita Bluefy (Safari non funziona).');
 })();
 </script>
 </body>
